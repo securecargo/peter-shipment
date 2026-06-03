@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Package Tracker</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f0f2f5; padding: 20px; }
+  h1 { text-align: center; margin-bottom: 30px; color: #333; }
+  .tracker { max-width: 600px; margin: auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+  input, select, button { padding: 12px; margin: 8px 0; width: 100%; font-size: 16px; border-radius: 6px; border: 1px solid #ccc; }
+  button { cursor: pointer; transition: 0.2s; color: #fff; font-weight: bold; background: #007bff; }
+  button:hover { background: #0056b3; }
+  .result { margin-top: 25px; }
+  .progress { display: flex; justify-content: space-between; position: relative; margin: 20px 0; }
+  .progress::before {
+    content: '';
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    right: 18px;
+    height: 6px;
+    background: #ddd;
+    z-index: 0;
+  }
+  .progress-fill {
+    content: '';
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    height: 6px;
+    background: #007bff;
+    z-index: 1;
+    width: 0;
+    transition: width 1s ease-in-out;
+  }
+  .step { flex: 1; text-align: center; position: relative; z-index: 2; }
+  .step-circle { width: 36px; height: 36px; border-radius: 50%; background: #ddd; margin: auto; line-height: 36px; color: #fff; font-weight: bold; transition: background 0.5s; }
+  .active .step-circle { background: #007bff; }
+  .checkpoint { border-bottom: 1px solid #eee; padding: 10px 0; }
+  .logo { height: 40px; margin-right: 10px; vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<h1>Package Tracker</h1>
+<div class="tracker">
+  <label for="trackingNumber">Tracking Number:</label>
+  <input type="text" id="trackingNumber" placeholder="Enter your tracking number">
+
+  <label for="carrier">Carrier:</label>
+  <select id="carrier">
+    <option value="DHL">DHL</option>
+    <option value="FedEx">FedEx</option>
+    <option value="UPS">UPS</option>
+    <option value="USPS">USPS</option>
+  </select>
+
+  <button onclick="trackPackage()">Track Package</button>
+
+  <div class="result" id="result"></div>
+</div>
+
+<script>
+// =====================
+// DHL SHIPMENT TEMPLATE
+// =====================
+const VALID_TRACKING_NUMBER = "JW4353762334"; // replace with your DHL number
+const SHIPMENT_INFO = {
+  carrier: "DHL",
+  logo: "https://upload.wikimedia.org/wikipedia/commons/d/d4/DHL_Express_logo.svg",
+  status: "In Transit",
+  estimated_delivery: "02-06-2026",
+  product_type: "10 Gold Bars and 2 hand fans",
+  receiver_name: "Helen Williams",
+  destination: "Columbia, SC, USA",
+  steps: ["Pending", "Shipped", "In Transit", "Out for Delivery", "Delivered"],
+  checkpoints: [
+    { time: "09-03-2025 09:00", location: "Los Angeles, CA", status: "Shipped" },
+    { time: "09-12-2025 09:15", location: "Roswell, NM", status: "In transit" },
+    { time: "10-17-2025 09:22", location: "Birmingham, AL", status: "In transit" },
+    { time: "12-02-2025 10:15", location: "Atlanta, Georgia", status: "In transit" },
+    { time: "02-02-2026 15:35", location: "Richmond, Virginia", status: "In transit" }
+]
+};
+
+// =====================
+// TRACKER FUNCTION
+// =====================
+function trackPackage() {
+  const number = document.getElementById("trackingNumber").value.trim();
+  const resultDiv = document.getElementById("result");
+
+  if (number !== VALID_TRACKING_NUMBER) {
+    resultDiv.innerHTML = `<p style="color:red; font-weight:bold;">Tracking number not found.</p>`;
+    return;
+  }
+
+  const data = SHIPMENT_INFO;
+
+  let html = `
+    <h2><img src="${data.logo}" class="logo">${data.carrier} - ${number}</h2>
+    <div style="background:#fafafa; border:1px solid #ddd; padding:15px; border-radius:8px; margin-bottom:20px;">
+      <p><strong>Status:</strong> ${data.status}</p>
+      <p><strong>Estimated Delivery:</strong> ${data.estimated_delivery}</p>
+      <p><strong>Product:</strong> ${data.product_type}</p>
+      <p><strong>Receiver:</strong> ${data.receiver_name}</p>
+      <p><strong>Destination:</strong> ${data.destination}</p>
+    </div>
+  `;
+
+  // Progress bar
+  const currentStepIndex = data.steps.indexOf(data.status);
+  html += `<div class="progress"><div class="progress-fill" id="progressFill"></div>`;
+  data.steps.forEach((step, i) => {
+    html += `<div class="step"><div class="step-circle" id="step${i}">${i+1}</div><div>${step}</div></div>`;
+  });
+  html += `</div>`;
+
+  // Checkpoints
+  html += `<h3>Checkpoints:</h3>`;
+  data.checkpoints.forEach(cp => {
+    html += `<div class="checkpoint"><strong>${cp.time}</strong> - ${cp.location} - ${cp.status}</div>`;
+  });
+
+  resultDiv.innerHTML = html;
+
+  // Animate progress
+  const progressFill = document.getElementById("progressFill");
+  const fillPercent = (currentStepIndex / (data.steps.length - 1)) * 100;
+  setTimeout(() => { progressFill.style.width = fillPercent + "%"; }, 100);
+
+  // Animate steps
+  for (let i = 0; i <= currentStepIndex; i++) {
+    setTimeout(() => {
+      document.getElementById(`step${i}`).classList.add('active');
+    }, i * 500);
+  }
+}
+</script>
+
